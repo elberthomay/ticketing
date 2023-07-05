@@ -1,15 +1,19 @@
-import { useState } from "react";
 import Router from "next/router";
+import { useEffect, useState } from "react";
 import useRequest from "../../hooks/useRequest";
 
-const signup = () => {
+const signin = ({ currentUser }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [runSignup, errors] = useRequest("/api/users/signup", "post");
+  const [runSignin, errors] = useRequest("/api/users/signin", "post");
+
+  useEffect(() => {
+    if (currentUser) Router.push("/");
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const data = await runSignup({
+    const data = await runSignin({
       email: email,
       password: password,
     });
@@ -20,7 +24,7 @@ const signup = () => {
     <>
       <div className="container">
         <form onSubmit={handleSubmit}>
-          <h1>Sign Up</h1>
+          <h1>Sign In</h1>
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
@@ -53,11 +57,11 @@ const signup = () => {
             </div>
           ) : null}
 
-          <button className="btn btn-primary">Signup</button>
+          <button className="btn btn-primary">Signin</button>
         </form>
       </div>
     </>
   );
 };
 
-export default signup;
+export default signin;
