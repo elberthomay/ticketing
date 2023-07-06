@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import authRoute from "./routes/authRoute";
-import errorHandler from "./middlewares/error-handler";
-import { NotFoundError } from "./errors/NotFoundError";
+import { errorHandler } from "@elytickets/common";
+import { NotFoundError } from "@elytickets/common";
 import cookieSession from "cookie-session";
 
 const app = express();

@@ -1,6 +1,6 @@
 import { Request, NextFunction, Response } from "express";
 import { User } from "../models";
-import { DatabaseError } from "../errors/DatabaseError";
+import { DatabaseError } from "@elytickets/common";
 import { DuplicateError } from "../errors/DuplicateError";
 
 export async function createUser(

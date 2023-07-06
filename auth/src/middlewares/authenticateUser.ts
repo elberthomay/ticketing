@@ -1,8 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { Password } from "../services/Password";
-import { User } from "../models";
-import { DatabaseError } from "../errors/DatabaseError";
-import { AuthenticationError } from "../errors/AuthenticationError";
+import { AuthenticationError } from "@elytickets/common";
 
 export async function authenticateUser(
   req: Request,

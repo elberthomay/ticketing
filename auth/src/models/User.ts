@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { DatabaseError } from "../errors/DatabaseError";
+import { DatabaseError } from "@elytickets/common";
 import { UserData, UserDoc, UserModel } from "../types/UserType";
 import { Password } from "../services/Password";
 

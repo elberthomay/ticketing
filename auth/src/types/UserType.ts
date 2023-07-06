@@ -5,11 +5,6 @@ export interface UserData {
   password: string;
 }
 
-export interface UserPayload {
-  id: string;
-  email: string;
-}
-
 export interface UserDoc extends mongoose.Document, UserData {}
 
 export interface UserModel extends mongoose.Model<UserDoc> {

@@ -7,8 +7,7 @@ import { fetchUser } from "../middlewares/fetchUser";
 import { createUser } from "../middlewares/createUser";
 import { createWebToken } from "../middlewares/createWebToken";
 
-import jwt from "jsonwebtoken";
-import { checkAuth } from "../middlewares/checkAuth";
+import { verifyAuth } from "@elytickets/common";
 
 const router = express.Router();
 
@@ -42,7 +41,7 @@ router.get("/api/users/signout", (req: Request, res: Response) => {
 });
 router.get(
   "/api/users/currentuser",
-  checkAuth,
+  verifyAuth,
   (req: Request, res: Response) => {
     res.json({ currentUser: req.currentUser || null });
   }

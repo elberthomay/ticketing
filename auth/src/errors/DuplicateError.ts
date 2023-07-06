@@ -1,4 +1,4 @@
-import { CustomError } from "../types/CustomError";
+import { CustomError } from "@elytickets/common";
 
 export class DuplicateError extends CustomError {
   statusCode = 400;

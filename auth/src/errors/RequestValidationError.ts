@@ -1,5 +1,5 @@
 import { ValidationError } from "express-validator";
-import { CustomError } from "../types/CustomError";
+import { CustomError } from "@elytickets/common";
 export class RequestValidationError extends CustomError {
   statusCode: number;
   constructor(public errors: ValidationError[]) {

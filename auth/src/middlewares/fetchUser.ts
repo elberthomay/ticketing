@@ -1,6 +1,6 @@
 import { Request, NextFunction, Response } from "express";
 import { User } from "../models";
-import { DatabaseError } from "../errors/DatabaseError";
+import { DatabaseError } from "@elytickets/common";
 
 export async function fetchUser(
   req: Request,
