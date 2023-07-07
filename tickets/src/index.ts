@@ -15,5 +15,5 @@ mongoose
   .catch(() => console.log("mongo connection error"));
 
 app.listen(3000, () => {
-  console.log("auth listening to port 3000");
+  console.log("tickets listening to port 3000");
 });

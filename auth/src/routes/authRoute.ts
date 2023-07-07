@@ -1,6 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 
-import { checkValidationError } from "../middlewares/checkValidationError";
+import { checkValidationError } from "@elytickets/common";
 import { authenticateUser } from "../middlewares/authenticateUser";
 import { validateLoginData } from "../middlewares/validateLoginData";
 import { fetchUser } from "../middlewares/fetchUser";
