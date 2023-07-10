@@ -11,6 +11,10 @@ import validateId from "../middlewares/validateId";
 import fetchTicket from "../middlewares/fetchTicket";
 import compareOwner from "../middlewares/compareOwner";
 import validateTicketData from "../middlewares/validateTicketData";
+import natsClient from "../events/natsClient";
+import TicketCreatedPublisher from "../events/TicketCreatedPublisher";
+import TicketUpdatedPublisher from "../events/TicketUpdatedPublisher";
+
 const router = express.Router();
 
 // get all tickets
@@ -47,6 +51,12 @@ router.post(
     const sellerId = req.currentUser?.id;
     const newTicket = new Ticket({ title, price, sellerId });
     const ticket = await newTicket.save();
+    await new TicketCreatedPublisher(natsClient.client).publish({
+      id: ticket._id.toHexString(),
+      title: ticket.title,
+      price: ticket.price,
+      sellerId: ticket.sellerId.toHexString(),
+    });
     res.status(201).json(ticket);
   })
 );
@@ -73,7 +83,15 @@ router.put(
         },
         { new: true }
       );
-      res.json(updatedTicket);
+      if (updatedTicket) {
+        await new TicketUpdatedPublisher(natsClient.client).publish({
+          id: updatedTicket._id.toHexString(),
+          title: updatedTicket.title,
+          price: updatedTicket.price,
+          sellerId: updatedTicket.sellerId.toHexString(),
+        });
+        res.json(updatedTicket);
+      } else throw new NotFoundError();
     } else throw new NotFoundError();
   })
 );

@@ -2,6 +2,9 @@ import request from "supertest";
 import app from "../../app";
 import { forgeCookie } from "@elytickets/common";
 import { TicketUpdateData } from "../../types/TicketType";
+import { createTicket } from "../../test/createTicket";
+
+import natsClient from "../../events/natsClient";
 
 const defaultCookie = () => [
   forgeCookie(
@@ -75,4 +78,20 @@ it("return 201 with valid data", async () => {
     .send({ title: "blue bar", price: "1560" })
     .set("Cookie", defaultCookie())
     .expect(201);
+});
+
+it("publish an event when new ticket is successfully created", async () => {
+  const data: TicketUpdateData = { title: "blue bar", price: "1560.3894" };
+  const ticketId = await createTicket(data, defaultCookie()[0]);
+
+  expect(natsClient.client.publish).toHaveBeenCalled();
+});
+
+it("publish an event when new ticket is successfully created", async () => {
+  const data: TicketUpdateData = { title: "blue bar", price: "1560.3894" };
+  await createTicket(data, defaultCookie()[0]);
+  await createTicket(data, defaultCookie()[0]);
+  await createTicket(data, defaultCookie()[0]);
+
+  expect(natsClient.client.publish).toHaveBeenCalledTimes(3);
 });

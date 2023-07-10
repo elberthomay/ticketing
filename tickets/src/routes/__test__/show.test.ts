@@ -71,6 +71,7 @@ describe("Show Routes", () => {
       expect(ticketData.title).toEqual(response.body[index].title);
       expect(ticketData.price).toEqual(response.body[index].price);
     });
+    expect(ticketDatas.length).toEqual(3);
   });
 
   it("should return 400 when retrieving ticket with invalid ID", async () => {
@@ -88,6 +89,7 @@ describe("Show Routes", () => {
   });
 
   it("should retrieve the ticket by ID", async () => {
+    console.log(ticketData);
     const ticketId = await createTicket(ticketData, cookie);
     console.log(ticketId);
     const response = await request(app).get(`/api/tickets/${ticketId}`);

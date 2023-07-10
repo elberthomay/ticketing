@@ -2,9 +2,9 @@ import { SessionData, forgeCookie } from "@elytickets/common";
 import { TicketData, TicketUpdateData } from "../../types/TicketType";
 import { createTicket } from "../../test/createTicket";
 import app from "../../app";
+import natsClient from "../../events/natsClient";
 
 const request = require("supertest");
-const mongoose = require("mongoose");
 
 // Mock data for testing
 const userData: SessionData = {
@@ -24,6 +24,7 @@ describe("Update API Route", () => {
   beforeEach(async () => {
     cookie = forgeCookie(userData, process.env.JWT_KEY!, "session");
     ticketId = await createTicket(ticketData, cookie);
+    jest.clearAllMocks();
   });
 
   //   afterEach(async () => {
@@ -196,5 +197,26 @@ describe("Update API Route", () => {
     expect(response.status).toBe(200);
     expect(response.body.title).toBe("Updated Ticket");
     expect(response.body.price).toBe("19.99");
+  });
+
+  it("should emit event 2 times", async () => {
+    await request(app)
+      .put(`/api/tickets/${ticketId}`)
+      .set("Cookie", cookie)
+      .send({
+        title: "Updated Ticket",
+        price: "19",
+      })
+      .expect(200);
+
+    const response = await request(app)
+      .put(`/api/tickets/${ticketId}`)
+      .set("Cookie", cookie)
+      .send({
+        title: "Updated Ticket",
+        price: "19.99",
+      });
+
+    expect(natsClient.client.publish).toHaveBeenCalledTimes(2);
   });
 });

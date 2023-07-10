@@ -9,7 +9,7 @@ export async function createTicket(
 ) {
   const response = await request(app)
     .post("/api/tickets")
-    .set("Cookie", cookie)
+    .set("Cookie", [cookie])
     .send(ticketData);
   return response.body.id;
 }
