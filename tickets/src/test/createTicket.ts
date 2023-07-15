@@ -6,7 +6,7 @@ import app from "../app";
 export async function createTicket(
   ticketData: TicketUpdateData,
   cookie: string
-) {
+): Promise<string> {
   const response = await request(app)
     .post("/api/tickets")
     .set("Cookie", [cookie])

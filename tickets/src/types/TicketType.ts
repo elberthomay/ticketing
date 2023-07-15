@@ -8,14 +8,16 @@ export interface TicketUpdateData {
 export interface TicketData {
   title: string;
   price: string;
-  sellerId: mongoose.Types.ObjectId;
+  ownerId: mongoose.Types.ObjectId;
 }
 
-export interface TicketDoc extends mongoose.Document, TicketData {}
+export interface TicketDoc extends mongoose.Document, TicketData {
+  version: number;
+}
 
 export interface TicketModel extends mongoose.Model<TicketDoc> {
-  createUser(attrs: TicketData): Promise<TicketDoc | undefined>;
-  findTicketsBySellerId(sellerId: string): Promise<TicketDoc[] | undefined>;
-  findTicketById(id: string): Promise<TicketDoc | null | undefined>;
+  createTicket(attrs: TicketData): Promise<TicketDoc | undefined>;
+  findTicketsByOwnerId(ownerId: string): Promise<TicketDoc[] | undefined>;
+  findDocumentById(id: string): Promise<TicketDoc | undefined>;
   findAll(): Promise<TicketDoc[] | undefined>;
 }

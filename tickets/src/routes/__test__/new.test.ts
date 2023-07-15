@@ -80,6 +80,18 @@ it("return 201 with valid data", async () => {
     .expect(201);
 });
 
+it("returns correct data when fetching data using id", async () => {
+  const data: TicketUpdateData = { title: "blue bar", price: "1560.3894" };
+  const ticketId = await createTicket(data, defaultCookie()[0]);
+  const response = await request(app)
+    .get(`/api/tickets/${ticketId}`)
+    .set("Cookie", defaultCookie())
+    .expect(200);
+
+  expect(response.body.title).toEqual(data.title);
+  expect(response.body.price).toEqual(data.price);
+});
+
 it("publish an event when new ticket is successfully created", async () => {
   const data: TicketUpdateData = { title: "blue bar", price: "1560.3894" };
   const ticketId = await createTicket(data, defaultCookie()[0]);

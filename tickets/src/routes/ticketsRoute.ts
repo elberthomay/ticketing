@@ -1,19 +1,21 @@
 import express, { NextFunction, Request, Response } from "express";
-import Ticket from "../models/Ticket";
 import {
   verifyAuth,
   requireAuth,
   checkValidationError,
   NotFoundError,
   wrapAsync,
+  fetchDocument,
+  compareOwner,
 } from "@elytickets/common";
+import { Ticket } from "../models/Ticket";
 import validateId from "../middlewares/validateId";
-import fetchTicket from "../middlewares/fetchTicket";
-import compareOwner from "../middlewares/compareOwner";
 import validateTicketData from "../middlewares/validateTicketData";
 import natsClient from "../events/natsClient";
 import TicketCreatedPublisher from "../events/TicketCreatedPublisher";
 import TicketUpdatedPublisher from "../events/TicketUpdatedPublisher";
+import { moveId } from "../middlewares/moveId";
+import { TicketDoc } from "../types/TicketType";
 
 const router = express.Router();
 
@@ -31,11 +33,11 @@ router.get(
   "/api/tickets/:id",
   validateId,
   checkValidationError,
-  fetchTicket,
+  moveId,
+  fetchDocument(Ticket, true),
   (req: Request, res: Response) => {
-    const { ticket } = req.body;
-    if (ticket) res.json(ticket);
-    else throw new NotFoundError();
+    const ticket = req?.document?.Ticket;
+    res.json(ticket);
   }
 );
 
@@ -48,14 +50,15 @@ router.post(
   checkValidationError,
   wrapAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { title, price } = req.body;
-    const sellerId = req.currentUser?.id;
-    const newTicket = new Ticket({ title, price, sellerId });
+    const ownerId = req.currentUser?.id;
+    const newTicket = new Ticket({ title, price, ownerId });
     const ticket = await newTicket.save();
     await new TicketCreatedPublisher(natsClient.client).publish({
       id: ticket._id.toHexString(),
       title: ticket.title,
       price: ticket.price,
-      sellerId: ticket.sellerId.toHexString(),
+      ownerId: ticket.ownerId.toHexString(),
+      version: ticket.version,
     });
     res.status(201).json(ticket);
   })
@@ -69,28 +72,26 @@ router.put(
   validateId,
   validateTicketData,
   checkValidationError,
-  fetchTicket,
-  compareOwner,
+  moveId,
+  fetchDocument(Ticket, true),
+  compareOwner("Ticket"),
   wrapAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    const { title, price, ticket } = req.body;
+    const { title, price } = req.body;
+    const ticket = req?.document?.Ticket as TicketDoc;
     if (ticket) {
-      const updatedTicket = await Ticket.findByIdAndUpdate(
-        id,
-        {
-          title,
-          price,
-        },
-        { new: true }
-      );
-      if (updatedTicket) {
+      ticket.set({ title, price });
+      await ticket.save();
+
+      if (ticket) {
         await new TicketUpdatedPublisher(natsClient.client).publish({
-          id: updatedTicket._id.toHexString(),
-          title: updatedTicket.title,
-          price: updatedTicket.price,
-          sellerId: updatedTicket.sellerId.toHexString(),
+          id: ticket._id.toHexString(),
+          title: ticket.title,
+          price: ticket.price,
+          ownerId: ticket.ownerId.toHexString(),
+          version: ticket.version,
         });
-        res.json(updatedTicket);
+        res.json(ticket);
       } else throw new NotFoundError();
     } else throw new NotFoundError();
   })

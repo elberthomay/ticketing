@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
-import { DatabaseError } from "@elytickets/common";
+import { DatabaseError, DocumentNotFoundError } from "@elytickets/common";
 import { TicketData, TicketDoc, TicketModel } from "../types/TicketType";
+import { updateIfCurrentPlugin } from "mongoose-update-if-current";
 
 const ticketModel = new mongoose.Schema(
   {
@@ -12,7 +13,7 @@ const ticketModel = new mongoose.Schema(
       type: String,
       required: true,
     },
-    sellerId: {
+    ownerId: {
       type: mongoose.Types.ObjectId,
       required: true,
     },
@@ -22,11 +23,13 @@ const ticketModel = new mongoose.Schema(
       transform(doc, ret) {
         ret.id = ret._id;
         delete ret._id;
-        delete ret.__v;
       },
     },
   }
 );
+
+ticketModel.set("versionKey", "version");
+ticketModel.plugin(updateIfCurrentPlugin);
 
 ticketModel.statics.createTicket = async (
   attrs: TicketData
@@ -40,37 +43,40 @@ ticketModel.statics.createTicket = async (
   }
 };
 
-ticketModel.statics.findTicketsBySellerId = async (
-  sellerId: string
+ticketModel.statics.findTicketsByOwnerId = async (
+  ownerId: string
 ): Promise<TicketDoc[] | undefined> => {
   try {
-    const tickets = Ticket.find({ sellerId });
+    const tickets = await Ticket.find({ ownerId });
     return tickets;
   } catch (err: unknown) {
     if (err instanceof Error) throw new DatabaseError(err.message);
   }
 };
 
-ticketModel.statics.findTicketById = async (
+ticketModel.statics.findDocumentById = async (
   id: string
-): Promise<TicketDoc | null | undefined> => {
+): Promise<TicketDoc | undefined> => {
   try {
-    const ticket = Ticket.findById(id);
+    const ticket = await Ticket.findById(id);
+    if (ticket === null) throw new DocumentNotFoundError("Ticket");
     return ticket;
   } catch (err: unknown) {
-    if (err instanceof Error) throw new DatabaseError(err.message);
+    if (err instanceof DocumentNotFoundError) throw err;
+    else if (err instanceof Error) throw new DatabaseError(err.message);
   }
 };
 
 ticketModel.statics.findAll = async (): Promise<TicketDoc[] | undefined> => {
   try {
-    const tickets = Ticket.find({});
+    const tickets = await Ticket.find({});
     return tickets;
   } catch (err: unknown) {
     if (err instanceof Error) throw new DatabaseError(err.message);
   }
 };
 
-const Ticket = mongoose.model<TicketDoc, TicketModel>("Ticket", ticketModel);
-
-export default Ticket;
+export const Ticket = mongoose.model<TicketDoc, TicketModel>(
+  "Ticket",
+  ticketModel
+);
