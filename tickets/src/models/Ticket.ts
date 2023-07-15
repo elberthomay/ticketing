@@ -14,9 +14,10 @@ const ticketModel = new mongoose.Schema(
       required: true,
     },
     ownerId: {
-      type: mongoose.Types.ObjectId,
+      type: String,
       required: true,
     },
+    orderId: String,
   },
   {
     toJSON: {

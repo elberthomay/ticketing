@@ -16,6 +16,7 @@ import TicketCreatedPublisher from "../events/TicketCreatedPublisher";
 import TicketUpdatedPublisher from "../events/TicketUpdatedPublisher";
 import { moveId } from "../middlewares/moveId";
 import { TicketDoc } from "../types/TicketType";
+import { TicketLockedError } from "../errors/TicketLockedError";
 
 const router = express.Router();
 
@@ -57,7 +58,7 @@ router.post(
       id: ticket._id.toHexString(),
       title: ticket.title,
       price: ticket.price,
-      ownerId: ticket.ownerId.toHexString(),
+      ownerId: ticket.ownerId,
       version: ticket.version,
     });
     res.status(201).json(ticket);
@@ -76,23 +77,23 @@ router.put(
   fetchDocument(Ticket, true),
   compareOwner("Ticket"),
   wrapAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const { id } = req.params;
     const { title, price } = req.body;
     const ticket = req?.document?.Ticket as TicketDoc;
     if (ticket) {
+      if (ticket.orderId) throw new TicketLockedError();
+
       ticket.set({ title, price });
       await ticket.save();
 
-      if (ticket) {
-        await new TicketUpdatedPublisher(natsClient.client).publish({
-          id: ticket._id.toHexString(),
-          title: ticket.title,
-          price: ticket.price,
-          ownerId: ticket.ownerId.toHexString(),
-          version: ticket.version,
-        });
-        res.json(ticket);
-      } else throw new NotFoundError();
+      await new TicketUpdatedPublisher(natsClient.client).publish({
+        id: ticket._id.toHexString(),
+        title: ticket.title,
+        price: ticket.price,
+        ownerId: ticket.ownerId,
+        version: ticket.version,
+      });
+
+      res.json(ticket);
     } else throw new NotFoundError();
   })
 );

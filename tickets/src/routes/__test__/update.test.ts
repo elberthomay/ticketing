@@ -3,6 +3,8 @@ import { TicketData, TicketUpdateData } from "../../types/TicketType";
 import { createTicket } from "../../test/createTicket";
 import app from "../../app";
 import natsClient from "../../events/natsClient";
+import { Ticket } from "../../models/Ticket";
+import mongoose from "mongoose";
 
 const request = require("supertest");
 
@@ -174,6 +176,24 @@ describe("Update API Route", () => {
         price: "-5",
       })
       .expect(400);
+  });
+
+  it("should return 409 when updating ticket with non-null orderId", async () => {
+    const ticket = new Ticket({
+      ...ticketData,
+      orderId: new mongoose.Types.ObjectId(),
+      ownerId: userData.id,
+    });
+    await ticket.save();
+
+    const response = await request(app)
+      .put(`/api/tickets/${ticket.id}`)
+      .set("Cookie", cookie)
+      .send({
+        title: "Updated Ticket",
+        price: "19.99",
+      })
+      .expect(409);
   });
 
   it("should return 200 when updating a valid ticket with complete data", async () => {
