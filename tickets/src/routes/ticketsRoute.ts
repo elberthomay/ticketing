@@ -60,6 +60,7 @@ router.post(
       price: ticket.price,
       ownerId: ticket.ownerId,
       version: ticket.version,
+      orderId: ticket.orderId,
     });
     res.status(201).json(ticket);
   })
@@ -78,7 +79,7 @@ router.put(
   compareOwner("Ticket"),
   wrapAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { title, price } = req.body;
-    const ticket = req?.document?.Ticket as TicketDoc;
+    const ticket = req?.document?.Ticket! as TicketDoc;
     if (ticket) {
       if (ticket.orderId) throw new TicketLockedError();
 
@@ -91,6 +92,7 @@ router.put(
         price: ticket.price,
         ownerId: ticket.ownerId,
         version: ticket.version,
+        orderId: ticket.orderId,
       });
 
       res.json(ticket);

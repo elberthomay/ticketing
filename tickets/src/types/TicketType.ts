@@ -8,7 +8,7 @@ export interface TicketData {
   price: string;
   ownerId: string;
   version: number;
-  orderId: string | null;
+  orderId?: string;
 }
 
 export interface TicketDoc extends mongoose.Document, TicketData {}

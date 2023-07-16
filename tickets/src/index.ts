@@ -1,6 +1,8 @@
 import app from "./app";
 import mongoose from "mongoose";
 import natsClient from "./events/natsClient";
+import { OrderCancelledListener } from "./events/listener/OrderCancelledListener";
+import { OrderCreatedListener } from "./events/listener/OrderCreatedListener";
 const start = async () => {
   if (!process.env.JWT_KEY) {
     throw new Error("JWT_KEY is not defined in env");
@@ -31,6 +33,11 @@ const start = async () => {
   } catch (err) {
     console.log(err);
   }
+
+  const orderCancelledListener = new OrderCancelledListener(natsClient.client);
+  orderCancelledListener.listen();
+  const orderCreatedListener = new OrderCreatedListener(natsClient.client);
+  orderCreatedListener.listen();
   app.listen(3000, () => {
     console.log("tickets listening to port 3000");
   });
