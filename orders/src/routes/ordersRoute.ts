@@ -22,7 +22,7 @@ import OrderCancelledPublisher from "../events/OrderCancelledPublisher";
 
 const router = express.Router();
 
-const expireDelay = 60 * 15 * 1000;
+const expireDelay = 20 * 1000; //60 * 15 * 1000
 
 router.get(
   "/",
@@ -89,6 +89,7 @@ router.post(
       ticket: {
         id: ticket._id,
         price: ticket.price,
+        version: ticket.version,
       },
       version: version,
     });

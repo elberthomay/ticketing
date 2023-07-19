@@ -18,7 +18,7 @@ const orderModel = new mongoose.Schema(
       default: OrderStatus.created,
     },
     expiresAt: {
-      type: mongoose.Schema.Types.Date,
+      type: Number,
       required: true,
     },
     ticket: {

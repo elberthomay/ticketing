@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import natsClient from "../../natsClient";
-import { TicketCreatedListener } from "../ticketCreatedListener";
+import { TicketCreatedListener } from "../TicketCreatedListener";
 import { Subjects, TicketCreatedEvent } from "@elytickets/common";
 import { Message } from "node-nats-streaming";
 import Ticket from "../../../models/Ticket";
