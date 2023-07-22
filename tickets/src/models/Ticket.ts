@@ -1,6 +1,10 @@
 import mongoose from "mongoose";
-import { DatabaseError, DocumentNotFoundError } from "@elytickets/common";
-import { TicketData, TicketDoc, TicketModel } from "../types/TicketType";
+import {
+  DatabaseError,
+  DocumentNotFoundError,
+  TicketCreateData,
+} from "@elytickets/common";
+import { TicketData, TicketDoc, TicketModel } from "@elytickets/common";
 import { updateIfCurrentPlugin } from "mongoose-update-if-current";
 
 const ticketModel = new mongoose.Schema(
@@ -33,7 +37,7 @@ ticketModel.set("versionKey", "version");
 ticketModel.plugin(updateIfCurrentPlugin);
 
 ticketModel.statics.createTicket = async (
-  attrs: TicketData
+  attrs: TicketCreateData
 ): Promise<TicketDoc | undefined> => {
   try {
     const newTicket = new Ticket(attrs);

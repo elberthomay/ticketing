@@ -15,8 +15,10 @@ import natsClient from "../events/natsClient";
 import TicketCreatedPublisher from "../events/TicketCreatedPublisher";
 import TicketUpdatedPublisher from "../events/TicketUpdatedPublisher";
 import { moveId } from "../middlewares/moveId";
-import { TicketDoc } from "../types/TicketType";
+import { TicketDoc } from "@elytickets/common";
 import { TicketLockedError } from "../errors/TicketLockedError";
+
+import _ from "lodash";
 
 const router = express.Router();
 
@@ -51,18 +53,14 @@ router.post(
   checkValidationError,
   wrapAsync(async (req: Request, res: Response, next: NextFunction) => {
     const { title, price } = req.body;
-    const ownerId = req.currentUser?.id;
-    const newTicket = new Ticket({ title, price, ownerId });
-    const ticket = await newTicket.save();
+    const ownerId = req.currentUser?.id!;
+    const newTicket = await Ticket.createTicket({ title, price, ownerId });
+    if (!newTicket) throw new Error("Internal Database Error");
     await new TicketCreatedPublisher(natsClient.client).publish({
-      id: ticket._id.toHexString(),
-      title: ticket.title,
-      price: ticket.price,
-      ownerId: ticket.ownerId,
-      version: ticket.version,
-      orderId: ticket.orderId,
+      ..._.pick(newTicket, ["title", "price", "ownerId", "version", "orderId"]),
+      id: newTicket.id!,
     });
-    res.status(201).json(ticket);
+    res.status(201).json(newTicket);
   })
 );
 
@@ -87,12 +85,8 @@ router.put(
       await ticket.save();
 
       await new TicketUpdatedPublisher(natsClient.client).publish({
-        id: ticket._id.toHexString(),
-        title: ticket.title,
-        price: ticket.price,
-        ownerId: ticket.ownerId,
-        version: ticket.version,
-        orderId: ticket.orderId,
+        ..._.pick(ticket, ["title", "price", "ownerId", "version", "orderId"]),
+        id: ticket.id!,
       });
 
       res.json(ticket);
