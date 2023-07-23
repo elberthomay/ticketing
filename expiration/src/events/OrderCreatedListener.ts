@@ -2,22 +2,32 @@ import {
   AbstractListener,
   OrderCreatedEvent,
   OrderEventData,
+  OrderStatus,
+  QueueGroups,
   Subjects,
 } from "@elytickets/common";
 import { Message } from "node-nats-streaming";
 import queueObject from "../bullmq/queueObject";
+import _ from "lodash";
 
 export class OrderCreatedListener extends AbstractListener<OrderCreatedEvent> {
   readonly subject = Subjects.orderCreated;
-  queueGroupName: string = "expiration-service";
+  queueGroupName = QueueGroups.expirationGroup;
   onMessage: (event: OrderEventData, msg: Message) => void = async (
     event: OrderEventData,
     msg: Message
   ) => {
     const delay = event.expiresAt - Date.now();
-    console.log(event.expiresAt);
-    await queueObject.add("newOrder", event, { delay });
-    console.log("orderCreatedEvent received:", event);
+    await queueObject.add(
+      "newOrder",
+      {
+        id: event.id,
+        status: event.status,
+      },
+      {
+        delay,
+      }
+    );
     msg.ack();
   };
 }

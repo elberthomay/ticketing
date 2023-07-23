@@ -20,7 +20,12 @@ export async function addOrder(
     ownerId: ownerId,
     status: status,
     expiresAt: Date.now() + 15 * 60 * 1000,
-    ticket: ticket._id,
+    ticket: {
+      id: ticket._id,
+      title: ticket.title,
+      price: ticket.price,
+      version: 0,
+    },
   });
   await newOrder.save();
   return newOrder._id;

@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
-import { NewTicketData, TicketDoc, TicketModel } from "../types/TicketType";
+import {
+  OrderTicketCreateData,
+  OrderTicketDoc,
+  OrderTicketModel,
+} from "@elytickets/common";
 import {
   DatabaseError,
   DocumentNotFoundError,
@@ -8,6 +12,7 @@ import {
 import { Order } from "./Order";
 import { OrderStatus } from "@elytickets/common";
 import { updateIfCurrentPlugin } from "mongoose-update-if-current";
+import _ from "lodash";
 
 const decrementVersion = (version: number) => version - 1;
 
@@ -44,13 +49,12 @@ ticketSchema.pre("save", function (next) {
 });
 
 ticketSchema.statics.createTicket = async (
-  ticketData: NewTicketData
-): Promise<TicketDoc | undefined> => {
+  ticketData: OrderTicketCreateData
+): Promise<OrderTicketDoc | undefined> => {
   try {
     const newTicket = new Ticket({
+      ..._.pick(ticketData, ["title", "price"]),
       _id: ticketData.id,
-      ...ticketData,
-      id: undefined,
     });
     await newTicket.save();
     return newTicket;
@@ -61,7 +65,7 @@ ticketSchema.statics.createTicket = async (
 
 ticketSchema.statics.findDocumentById = async (
   id: string
-): Promise<TicketDoc | undefined> => {
+): Promise<OrderTicketDoc | undefined> => {
   try {
     const ticket = await Ticket.findById(id);
     if (ticket === null) throw new DocumentNotFoundError("Ticket");
@@ -74,7 +78,7 @@ ticketSchema.statics.findDocumentById = async (
 
 ticketSchema.statics.findByIdAndVersion = async (
   eventData: TicketEventData
-): Promise<TicketDoc | null> => {
+): Promise<OrderTicketDoc | null> => {
   const ticket = await Ticket.findOne({
     _id: eventData.id,
     version: decrementVersion(eventData.version),
@@ -84,13 +88,15 @@ ticketSchema.statics.findByIdAndVersion = async (
 
 ticketSchema.methods.isReserved = async function (): Promise<boolean> {
   const existingOrder = await Order.findOne({
-    ticket: this._id,
+    "ticket.id": this._id.toHexString(),
     status: { $ne: OrderStatus.cancelled },
   });
-
   return !!existingOrder;
 };
 
-const Ticket = mongoose.model<TicketDoc, TicketModel>("Ticket", ticketSchema);
+const Ticket = mongoose.model<OrderTicketDoc, OrderTicketModel>(
+  "Ticket",
+  ticketSchema
+);
 
 export default Ticket;

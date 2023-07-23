@@ -4,28 +4,66 @@ import {
   TicketUpdatedEvent,
   TicketEventData,
   DocumentNotFoundError,
+  OrderStatus,
 } from "@elytickets/common";
 import Ticket from "../../models/Ticket";
 import { AbstractListener } from "@elytickets/common";
-import mongoose from "mongoose";
+import { Order } from "../../models/Order";
+import OrderCancelledPublisher from "../OrderCancelledPublisher";
+import _ from "lodash";
+import OrderConfirmedPublisher from "../OrderConfirmedPublisher";
+import { InvalidOrderMethodError } from "../../../errors/InvalidOrderMethodError";
+
+const verifiedExpireDelay = 15 * 60 * 1000;
 
 export class TicketUpdatedListener extends AbstractListener<TicketUpdatedEvent> {
   readonly subject = Subjects.ticketUpdated;
   queueGroupName = "orders-service";
   onMessage = async (event: TicketEventData, msg: Message) => {
-    const { id, title, price, version } = event;
+    try {
+      const { id, title, price, version } = event;
 
-    const ticket = await Ticket.findByIdAndVersion(event);
-    if (!ticket) throw new DocumentNotFoundError("Ticket");
+      const ticket = await Ticket.findByIdAndVersion(event);
+      if (!ticket) throw new DocumentNotFoundError("Ticket");
 
-    ticket.set({ title, price, version });
-    await ticket.save();
+      ticket.set({ title, price, version });
+      await ticket.save();
+      if (event.orderId) {
+        const newExpiresAt = Date.now() + verifiedExpireDelay;
+        await Order.verifyOrderById(event.orderId);
+        await Order.findByIdAndUpdate(event.orderId, {
+          expiresAt: newExpiresAt,
+        });
+        const orderConfirmedPub = new OrderConfirmedPublisher(this.client);
+        await orderConfirmedPub.publish({
+          id: event.orderId,
+          expiresAt: newExpiresAt,
+        });
 
-    if (ticket) {
-      console.log("ticket updated event received");
-      const ticket = await Ticket.findDocumentById(id);
-      console.log(ticket);
+        // const otherOrders = await Order.find({
+        //   ticket: { id: id },
+        //   _id: { $ne: event.orderId },
+        //   status: OrderStatus.created,
+        // });
+
+        // await Promise.all(
+        //   otherOrders.map((order) => Order.cancelOrderById(order.id))
+        // );
+        // const orderCancelledPub = new OrderCancelledPublisher(this.client);
+        // await Promise.all(
+        //   otherOrders.map((order) =>
+        //     orderCancelledPub.publish({
+        //       id: order.id,
+        //       version: order.version,
+        //       ticket: _.pick(order.ticket, ["id", "version"]),
+        //     })
+        //   )
+        // );
+      }
+
       msg.ack();
-    } else console.error(new Error("Id from event is invalid"));
+    } catch (err) {
+      if (err instanceof InvalidOrderMethodError) msg.ack();
+    }
   };
 }

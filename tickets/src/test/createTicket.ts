@@ -1,4 +1,4 @@
-import { TicketUpdateData } from "../types/TicketType";
+import { TicketUpdateData } from "@elytickets/common";
 import request from "supertest";
 import app from "../app";
 

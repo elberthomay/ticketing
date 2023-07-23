@@ -1,9 +1,14 @@
 import mongoose from "mongoose";
-import { DatabaseError, DocumentNotFoundError } from "@elytickets/common";
-import { OrderData, OrderDoc, OrderModel } from "../types/OrderType";
+import {
+  DatabaseError,
+  DocumentNotFoundError,
+  OrderCreateData,
+} from "@elytickets/common";
+import { OrderData, OrderDoc, OrderModel } from "@elytickets/common";
 import { InvalidOrderMethodError } from "../../errors/InvalidOrderMethodError";
 import { OrderStatus } from "@elytickets/common";
 import { updateIfCurrentPlugin } from "mongoose-update-if-current";
+import _ from "lodash";
 
 const orderModel = new mongoose.Schema(
   {
@@ -22,9 +27,22 @@ const orderModel = new mongoose.Schema(
       required: true,
     },
     ticket: {
-      type: mongoose.Types.ObjectId,
-      ref: "Ticket",
-      required: true,
+      id: {
+        type: String,
+        required: true,
+      },
+      title: {
+        type: String,
+        required: true,
+      },
+      price: {
+        type: String,
+        required: true,
+      },
+      version: {
+        type: Number,
+        required: true,
+      },
     },
   },
   {
@@ -52,10 +70,13 @@ orderModel.plugin(updateIfCurrentPlugin);
 // });
 
 orderModel.statics.createOrder = async (
-  attrs: OrderData
+  attrs: OrderCreateData
 ): Promise<OrderDoc | undefined> => {
   try {
-    const orderData = { ...attrs, status: OrderStatus.created };
+    const orderData = {
+      ..._.pick(attrs, ["ownerId", "expiresAt", "ticket"]),
+      status: OrderStatus.created,
+    };
     const newOrder = new Order(orderData);
     await newOrder.save();
     return newOrder;
@@ -68,7 +89,7 @@ orderModel.statics.findDocumentById = async (
   id: string
 ): Promise<OrderDoc | undefined> => {
   try {
-    const order = await Order.findById(id).populate("ticket");
+    const order = await Order.findById(id);
     if (order === null) throw new DocumentNotFoundError("Order");
     else return order;
   } catch (err: unknown) {
@@ -84,7 +105,7 @@ orderModel.statics.findAllActiveOrderByBuyerId = async (
     const orders = Order.find({
       ownerId: id,
       status: { $in: [OrderStatus.created, OrderStatus.awaitingPayment] },
-    }).populate("ticket");
+    });
     return orders;
   } catch (err: unknown) {
     if (err instanceof Error) throw new DatabaseError(err.message);
@@ -93,15 +114,15 @@ orderModel.statics.findAllActiveOrderByBuyerId = async (
 
 orderModel.statics.changeOrderStatus = async (
   id: string,
-  newStatus: OrderStatus
+  status: OrderStatus
 ): Promise<OrderDoc | undefined> => {
   const order = await Order.findDocumentById(id);
 
   if (order === undefined) throw new Error("Error in findDocumentById");
 
-  if (order.status === newStatus) return order;
+  if (order.status === status) return order;
 
-  switch (newStatus) {
+  switch (status) {
     case OrderStatus.cancelled:
       if (order.status === OrderStatus.complete) {
         throw new InvalidOrderMethodError(
@@ -121,9 +142,13 @@ orderModel.statics.changeOrderStatus = async (
       }
       break;
     case OrderStatus.awaitingPayment:
-      if (order.status === OrderStatus.complete) {
+      if (order.status === OrderStatus.cancelled) {
         throw new InvalidOrderMethodError(
-          "Verification is unavailable for completed order"
+          "Confirmation is unavailable for cancelled order"
+        );
+      } else if (order.status === OrderStatus.complete) {
+        throw new InvalidOrderMethodError(
+          "Confirmation is unavailable for completed order"
         );
       }
       break;
@@ -133,7 +158,7 @@ orderModel.statics.changeOrderStatus = async (
       throw new Error("Invalid order status in changeOrderStatus");
   }
   try {
-    order.set("status", newStatus);
+    order.set("status", status);
     await order.save();
     return order;
   } catch (err: unknown) {

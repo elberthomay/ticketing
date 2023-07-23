@@ -1,7 +1,6 @@
 import { forgeCookie } from "@elytickets/common";
 import request from "supertest";
 import app from "../../app";
-import Ticket from "../../models/Ticket";
 import { addOrder, addTickets } from "../../test/addTickets";
 import { OrderStatus } from "@elytickets/common";
 import mongoose from "mongoose";

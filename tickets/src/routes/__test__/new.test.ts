@@ -1,7 +1,7 @@
 import request from "supertest";
 import app from "../../app";
 import { forgeCookie } from "@elytickets/common";
-import { TicketUpdateData } from "../../types/TicketType";
+import { TicketUpdateData } from "@elytickets/common";
 import { createTicket } from "../../test/createTicket";
 
 import natsClient from "../../events/natsClient";

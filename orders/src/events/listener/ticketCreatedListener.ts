@@ -6,21 +6,15 @@ import {
 } from "@elytickets/common";
 import Ticket from "../../models/Ticket";
 import { AbstractListener } from "@elytickets/common";
-import mongoose from "mongoose";
+import _ from "lodash";
 
 export class TicketCreatedListener extends AbstractListener<TicketCreatedEvent> {
   readonly subject = Subjects.ticketCreated;
   queueGroupName = "orders-service";
   onMessage = async (event: TicketEventData, msg: Message) => {
-    const { id, title, price } = event;
-    const newTicket = await Ticket.createTicket({
-      id: new mongoose.Types.ObjectId(id),
-      title,
-      price,
-    });
-    console.log("ticket created event received");
-    const ticket = await Ticket.findDocumentById(id);
-    console.log(ticket);
+    const newTicket = await Ticket.createTicket(
+      _.pick(event, ["id", "title", "price"])
+    );
     msg.ack();
   };
 }

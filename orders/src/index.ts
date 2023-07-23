@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import natsClient from "./events/natsClient";
 import { TicketCreatedListener } from "./events/listener/TicketCreatedListener";
 import { TicketUpdatedListener } from "./events/listener/TicketUpdatedListener";
-import { OrderExpiredListener } from "./events/listener/OrderExpiredListener";
+import { ExpirationCompleteListener } from "./events/listener/ExpirationCompleteListener";
 const start = async () => {
   if (!process.env.JWT_KEY) {
     throw new Error("JWT_KEY is not defined in env");
@@ -38,7 +38,7 @@ const start = async () => {
     const ticketUpdatedListener = new TicketUpdatedListener(
       natsClient.client
     ).listen();
-    const orderExpiredListener = new OrderExpiredListener(
+    const expirationCompleteListener = new ExpirationCompleteListener(
       natsClient.client
     ).listen();
   } catch (err) {

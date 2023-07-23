@@ -3,7 +3,6 @@ import request from "supertest";
 import app from "../../app";
 import { addOrder, addTickets } from "../../test/addTickets";
 import { OrderStatus } from "@elytickets/common";
-import { Order } from "../../models/Order";
 
 const defaultCookie = () => [
   forgeCookie(

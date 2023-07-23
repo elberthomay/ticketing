@@ -1,4 +1,5 @@
 import {
+  OrderTicketDoc,
   checkValidationError,
   compareOwner,
   fetchDocument,
@@ -13,16 +14,15 @@ import validateTicketId from "../middlewares/validateTicketId";
 import { moveTicketId } from "../middlewares/moveTicketId";
 import { Order } from "../models/Order";
 import Ticket from "../models/Ticket";
-import { TicketDoc } from "../types/TicketType";
-import mongoose from "mongoose";
 import { DuplicateOrderError } from "../../errors/DuplicateOrderError";
 import OrderCreatedPublisher from "../events/OrderCreatedPublisher";
 import natsClient from "../events/natsClient";
 import OrderCancelledPublisher from "../events/OrderCancelledPublisher";
+import _ from "lodash";
 
 const router = express.Router();
 
-const expireDelay = 20 * 1000; //60 * 15 * 1000
+const unverifiedExpireDelay = 2 * 60 * 1000;
 
 router.get(
   "/",
@@ -67,15 +67,19 @@ router.post(
     if (!ownerId) throw new Error("Route is not preceeded by requireAuth");
 
     // retrieve fetched TicketDoc and check if ticket is reserved
-    const ticket: TicketDoc = req?.document?.Ticket as TicketDoc;
+    const ticket: OrderTicketDoc = req?.document?.Ticket as OrderTicketDoc;
     if (ticket && (await ticket.isReserved())) throw new DuplicateOrderError();
 
     // save new order
-    const newOrder = await Order.createOrder({
-      expiresAt: Date.now() + expireDelay,
-      ownerId: new mongoose.Types.ObjectId(ownerId),
-      ticket: ticket._id,
-    });
+    const newOrderData = {
+      expiresAt: Date.now() + unverifiedExpireDelay,
+      ownerId: ownerId,
+      ticket: {
+        ..._.pick(ticket, ["title", "price", "version"]),
+        id: ticket.id!,
+      },
+    };
+    const newOrder = await Order.createOrder(newOrderData);
     if (!newOrder) throw new Error("Error in database operation");
 
     //send OrderCreatedEvent
@@ -88,7 +92,6 @@ router.post(
       ownerId,
       ticket: {
         id: ticket._id,
-        price: ticket.price,
         version: ticket.version,
       },
       version: version,
@@ -120,6 +123,7 @@ router.delete(
       id,
       ticket: {
         id: cancelledOrder.ticket.id,
+        version: cancelledOrder.ticket.version,
       },
       version: cancelledOrder.version,
     });

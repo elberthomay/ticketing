@@ -1,7 +1,6 @@
 import { forgeCookie } from "@elytickets/common";
 import request from "supertest";
 import app from "../../app";
-import Ticket from "../../models/Ticket";
 import { addOrder, addTickets } from "../../test/addTickets";
 import { OrderStatus } from "@elytickets/common";
 import { Order } from "../../models/Order";
@@ -130,7 +129,7 @@ it("return status code 200(success) when ordering ticket with no existing order"
   const order = await Order.findById(orderId);
 
   expect(order?.ownerId).toEqual(defaultCookie.id);
-  expect(order?.ticket?._id.toString()).toEqual(testTickets[4]._id);
+  expect(order?.ticket?.id).toEqual(testTickets[4]._id);
 
   expect(natsClient.client.publish).toHaveBeenCalled();
 });

@@ -1,5 +1,5 @@
 import { SessionData, forgeCookie } from "@elytickets/common";
-import { TicketData, TicketUpdateData } from "../../types/TicketType";
+import { TicketData, TicketUpdateData } from "@elytickets/common";
 import { createTicket } from "../../test/createTicket";
 import app from "../../app";
 import natsClient from "../../events/natsClient";

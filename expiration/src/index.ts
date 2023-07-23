@@ -1,8 +1,9 @@
 import { Queue, Worker } from "bullmq";
 import { OrderCreatedListener } from "./events/OrderCreatedListener";
 import natsClient from "./events/natsClient";
-import { OrderExpiredPublisher } from "./events/OrderExpiredPublisher";
-import { OrderEventData } from "@elytickets/common";
+import { ExpirationCompletePublisher } from "./events/ExpirationCompletePublisher";
+import { ExpirationCompleteEvent, OrderEventData } from "@elytickets/common";
+import { OrderConfirmedListener } from "./events/OrderConfirmedListener";
 const setup = async () => {
   if (
     !process.env.NATS_CLUSTER_ID ||
@@ -21,13 +22,16 @@ const setup = async () => {
   );
   console.log("Nats connected");
   const orderCreatedListener = new OrderCreatedListener(natsClient.client);
-  const orderExpiredPublisher = new OrderExpiredPublisher(natsClient.client);
+  const orderConfirmedListener = new OrderConfirmedListener(natsClient.client);
+  const expirationCompletePublisher = new ExpirationCompletePublisher(
+    natsClient.client
+  );
   orderCreatedListener.listen();
-  const worker = new Worker<OrderEventData>(
+  orderConfirmedListener.listen();
+  const worker = new Worker<ExpirationCompleteEvent["data"]>(
     "expiration-queue",
     async (job) => {
-      console.log("orderExpired Event published:", job.data);
-      await orderExpiredPublisher.publish(job.data);
+      await expirationCompletePublisher.publish(job.data);
     },
     {
       connection: {
