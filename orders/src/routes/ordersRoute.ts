@@ -92,6 +92,8 @@ router.post(
       ownerId,
       ticket: {
         id: ticket._id,
+        title: ticket.title,
+        price: ticket.price,
         version: ticket.version,
       },
       version: version,
@@ -123,6 +125,8 @@ router.delete(
       id,
       ticket: {
         id: cancelledOrder.ticket.id,
+        title: cancelledOrder.ticket.title,
+        price: cancelledOrder.ticket.price,
         version: cancelledOrder.ticket.version,
       },
       version: cancelledOrder.version,

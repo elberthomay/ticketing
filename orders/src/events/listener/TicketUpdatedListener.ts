@@ -31,13 +31,14 @@ export class TicketUpdatedListener extends AbstractListener<TicketUpdatedEvent> 
       if (event.orderId) {
         const newExpiresAt = Date.now() + verifiedExpireDelay;
         await Order.verifyOrderById(event.orderId);
-        await Order.findByIdAndUpdate(event.orderId, {
+        const order = await Order.findByIdAndUpdate(event.orderId, {
           expiresAt: newExpiresAt,
         });
         const orderConfirmedPub = new OrderConfirmedPublisher(this.client);
         await orderConfirmedPub.publish({
           id: event.orderId,
           expiresAt: newExpiresAt,
+          version: order?.version!,
         });
 
         // const otherOrders = await Order.find({

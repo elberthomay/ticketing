@@ -24,6 +24,8 @@ export class ExpirationCompleteListener extends AbstractListener<ExpirationCompl
           id: updatedOrder?._id,
           ticket: {
             id: order.ticket.id,
+            title: order.ticket.title,
+            price: order.ticket.price,
             version: order.ticket.version,
           },
           version: updatedOrder?.version!,
