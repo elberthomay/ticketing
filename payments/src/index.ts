@@ -4,6 +4,7 @@ import natsClient from "./events/natsClient";
 import { OrderCreatedListener } from "./events/OrderCreatedListener";
 import { OrderConfirmedListener } from "./events/OrderConfirmedListener";
 import { OrderCancelledListener } from "./events/OrderCancelledListener";
+import { OrderCompleteListener } from "./events/OrderCompleteListener";
 const start = async () => {
   if (!process.env.JWT_KEY) {
     throw new Error("JWT_KEY is not defined in env");
@@ -43,6 +44,9 @@ const start = async () => {
       natsClient.client
     ).listen();
     const orderCancelledListener = new OrderCancelledListener(
+      natsClient.client
+    ).listen();
+    const orderCompleteListener = new OrderCompleteListener(
       natsClient.client
     ).listen();
   } catch (err) {

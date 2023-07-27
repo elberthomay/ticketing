@@ -5,9 +5,10 @@ import { OrderStatus } from "@elytickets/common";
 import Order from "../../models/Order";
 import natsClient from "../../events/natsClient";
 import { addOrder } from "../../test/addTickets";
-import mongoose from "mongoose";
+import mongoose, { ObjectId } from "mongoose";
 import stripe from "../../stripe";
 import { ChargeData } from "@elytickets/common";
+import { Charge } from "../../models/Charge";
 
 const defaultCookie = () => [
   forgeCookie(
@@ -64,7 +65,7 @@ const testTickets = [
 ];
 
 const setup = async () => {
-  const orderIdList = [];
+  const orderIdList: mongoose.Types.ObjectId[] = [];
   orderIdList.push(
     await addOrder(testTickets[0], defaultCookie.id, OrderStatus.created)
   );
@@ -189,11 +190,17 @@ it("return status code 201(created) when creating charge on valid order", async 
     .expect(201);
 
   expect(natsClient.client.publish).toHaveBeenCalled();
-
-  //expect(stripe.charges.create).toHaveBeenCalled();
-  //const mockCallArgument = (stripe.charges.create as jest.Mock).mock
-  //  .calls[0][0];
   const paymentData: ChargeData = result.body;
+
+  //check db
+  const chargeDoc = await Charge.findDocumentById(paymentData.id);
+
+  expect(chargeDoc?.orderId).toEqual(orderIdList[1].toHexString());
+  expect(chargeDoc?.amount).toEqual(
+    Math.round(parseFloat(testTickets[1].price) * 100)
+  );
+
+  //retrieve charge from stripe
   const charge = await stripe.charges.retrieve(paymentData.chargeId);
   expect(charge.currency).toEqual("usd");
   expect(charge.amount).toEqual(
@@ -209,6 +216,28 @@ it("return status code 200(success) when charge has been made", async () => {
     .set("Cookie", defaultCookie())
     .send({ orderId: orderIdList[1], token })
     .expect(201);
+
+  await request(app)
+    .post("/api/payments/")
+    .set("Cookie", defaultCookie())
+    .send({ orderId: orderIdList[1], token })
+    .expect(200);
+
+  expect(natsClient.client.publish).toHaveBeenCalledTimes(1);
+});
+
+it("return status code 200(success) when charge has been made and order status changed to complete", async () => {
+  const orderIdList = await setup();
+
+  const result = await request(app)
+    .post("/api/payments/")
+    .set("Cookie", defaultCookie())
+    .send({ orderId: orderIdList[1], token })
+    .expect(201);
+
+  const order = await Order.findById(orderIdList[1]);
+  order?.set("status", OrderStatus.complete);
+  await order?.save();
 
   await request(app)
     .post("/api/payments/")

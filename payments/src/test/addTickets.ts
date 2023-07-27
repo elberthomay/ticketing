@@ -6,7 +6,7 @@ export async function addOrder(
   ticket: any,
   ownerId: string,
   status: OrderStatus
-) {
+): Promise<mongoose.Types.ObjectId> {
   const newOrder = await Order.createOrder({
     id: new mongoose.Types.ObjectId().toHexString(),
     ownerId: ownerId,

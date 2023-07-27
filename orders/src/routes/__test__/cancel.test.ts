@@ -110,21 +110,12 @@ it("return status code 401(unauthorized) when logged in as other user", async ()
 it("return status code 405(invalid method) when cancelling completed order", async () => {
   await addOrder(testTickets[0], defaultCookie.id, OrderStatus.created);
   await addOrder(testTickets[1], defaultCookie.id, OrderStatus.awaitingPayment);
-  const cancelledOrderId = await addOrder(
-    testTickets[2],
-    defaultCookie.id,
-    OrderStatus.cancelled
-  );
+
   const completedOrderId = await addOrder(
     testTickets[3],
     defaultCookie.id,
     OrderStatus.complete
   );
-  //   await request(app)
-  //     .delete(`/api/orders/${cancelledOrderId}`)
-  //     .set("Cookie", defaultCookie())
-  //     .send()
-  //     .expect(405);
 
   await request(app)
     .delete(`/api/orders/${completedOrderId}`)
