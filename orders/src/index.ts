@@ -49,7 +49,7 @@ const start = async () => {
     console.log(err);
   }
   app.listen(3000, () => {
-    console.log("tickets listening to port 3000");
+    console.log("Orders listening to port 3000");
   });
 };
 
