@@ -53,7 +53,7 @@ const start = async () => {
     console.log(err);
   }
   app.listen(3000, () => {
-    console.log("payments listening to port 3000");
+    console.log("Payments listening to port 3000");
   });
 };
 
