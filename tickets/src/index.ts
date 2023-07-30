@@ -39,7 +39,7 @@ const start = async () => {
   const orderCreatedListener = new OrderCreatedListener(natsClient.client);
   orderCreatedListener.listen();
   app.listen(3000, () => {
-    console.log("tickets listening to port 3000");
+    console.log("Tickets listening to port 3000");
   });
 };
 
