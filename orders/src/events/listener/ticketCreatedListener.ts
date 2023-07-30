@@ -8,7 +8,7 @@ import Ticket from "../../models/Ticket";
 import { AbstractListener } from "@elytickets/common";
 import _ from "lodash";
 
-export class TicketCreatedListener extends AbstractListener<TicketCreatedEvent> {
+export default class TicketCreatedListener extends AbstractListener<TicketCreatedEvent> {
   readonly subject = Subjects.ticketCreated;
   queueGroupName = "orders-service";
   onMessage = async (event: TicketEventData, msg: Message) => {

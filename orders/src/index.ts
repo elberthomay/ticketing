@@ -1,7 +1,7 @@
 import app from "./app";
 import mongoose from "mongoose";
 import natsClient from "./events/natsClient";
-import { TicketCreatedListener } from "./events/listener/TicketCreatedListener";
+import TicketCreatedListener from "./events/listener/TicketCreatedListener";
 import { TicketUpdatedListener } from "./events/listener/TicketUpdatedListener";
 import { ExpirationCompleteListener } from "./events/listener/ExpirationCompleteListener";
 import { ChargeCreatedListener } from "./events/listener/ChargeCreatedListener";
