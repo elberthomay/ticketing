@@ -1,8 +1,13 @@
 import Link from "next/link";
 export default function Header({ currentUser }) {
+  // filter links. depending on whether currentUser is defined, individual link will
+  // evaluate to false or label link object
   const links = [
     !currentUser && { label: "Sign In", href: "/auth/signin" },
     !currentUser && { label: "Sign Up", href: "/auth/signup" },
+    currentUser && { label: "New Tickets", href: "/ticket/new" },
+    currentUser && { label: "Your Tickets", href: "/ticket" },
+    currentUser && { label: "Orders", href: "/order" },
     currentUser && { label: "Sign Out", href: "/auth/signout" },
   ]
     .filter((link) => link)

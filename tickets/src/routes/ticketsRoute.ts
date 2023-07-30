@@ -31,6 +31,18 @@ router.get(
   })
 );
 
+//get ticket by currentOwner
+router.get(
+  "/api/tickets/byOwner",
+  verifyAuth,
+  requireAuth,
+  wrapAsync(async (req: Request, res: Response) => {
+    const { id } = req.currentUser!;
+    const tickets = await Ticket.findTicketsByOwnerId(id);
+    res.json(tickets);
+  })
+);
+
 //get ticket by id
 router.get(
   "/api/tickets/:id",

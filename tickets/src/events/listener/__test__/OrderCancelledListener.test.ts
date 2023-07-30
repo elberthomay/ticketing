@@ -15,6 +15,8 @@ const setup = (ticketId: string) => {
     id: new mongoose.Types.ObjectId().toHexString(),
     ticket: {
       id: ticketId,
+      title: "no",
+      price: "10.5",
       version: 0,
     },
     version: 0,

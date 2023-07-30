@@ -1,13 +1,15 @@
+import TicketList from "../components/TicketList";
+import TicketListButton from "../components/TicketListButton";
+
 const index = ({ currentUser }) => {
   return (
-    <>
-      {currentUser ? (
-        <h1>Hello {currentUser.email}</h1>
-      ) : (
-        <h1>Hello... anonymous??</h1>
-      )}
+    <div className="container">
+      <>
+        <h1>List of Tickets</h1>
+        <TicketList url={"/api/tickets/"} buttonComponent={TicketListButton} />
+      </>
       ;
-    </>
+    </div>
   );
 };
 

@@ -18,6 +18,8 @@ const setup = (ticketId: string) => {
     expiresAt: Date.now() + 1000 * 1 * 60,
     ticket: {
       id: ticketId,
+      title: "no",
+      price: "10.5",
       version: 0,
     },
     version: 0,
